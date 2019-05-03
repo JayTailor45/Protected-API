@@ -1,6 +1,7 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const Sequelize = require("sequelize");
+const bcrypt = require('bcrypt');
 
 const app = express();
 
@@ -35,13 +36,43 @@ connection
 
 app.get('/', (req, res) => res.json({connection: 'success'}).status(200));
 
-app.post('/login', (req,res) => {
+app.post('/reg', (req,res) => {
     const u = new User();
     u.email = req.body.email;
-    u.password = req.body.password;
-    u.save()
-    .then(user => {
-        res.send(user).status(200)
+    bcrypt.hash(req.body.password, 10, (err,hashPassword) => {
+        if(err){
+            console.log('Error in hashing passowrd')
+        } else {
+            u.password = hashPassword
+            u.save()
+            .then(user => {
+                res.send(user).status(200)
+            })
+            .catch(e => {
+                res.json({ error: JSON.stringify(e)}).status(400)
+            });
+        }
+    })
+});
+
+app.post('/login', (req,res) => {
+    User.findOne({
+        where:{
+            email: req.body.email    
+        }
+    })
+    .then( u => {
+        if(u) {
+            bcrypt.compare(req.body.password, u.password)
+            .then(data => {
+                res.send(data).status(200)
+            })
+            .catch(err => {
+                res.json({err: JSON.stringify(err)}).status(200)
+            });
+        } else {
+            res.json({err: 'User not found'}).status(400)
+        }
     })
     .catch(e => {
         res.json({ error: JSON.stringify(e)}).status(400)
