@@ -2,10 +2,12 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const Sequelize = require("sequelize");
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 
 const app = express();
 
 const PORT = 3030
+const SECRET = 'mysecretsshhh'
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -65,13 +67,23 @@ app.post('/login', (req,res) => {
         if(u) {
             bcrypt.compare(req.body.password, u.password)
             .then(data => {
-                res.send(data).status(200)
+                if(data) {
+
+                    jwt.sign({u},SECRET, (err,token) => {
+                        if(err) {
+                            res.send({error: 'Error creating token'})
+                        }
+                        res.json({token})
+                    });
+                } else {
+                    res.send({err: 'Password did\'nt matched.'}).status(200)
+                }
             })
             .catch(err => {
                 res.json({err: JSON.stringify(err)}).status(200)
             });
         } else {
-            res.json({err: 'User not found'}).status(400)
+            res.json({err: 'User not found.'}).status(400)
         }
     })
     .catch(e => {
