@@ -38,6 +38,16 @@ connection
 
 app.get('/', (req, res) => res.json({connection: 'success'}).status(200));
 
+app.post('/secret', verifyToken,(req,res) => {
+    jwt.verify(req.token, SECRET, {expiresIn: '5m'}, (err,authData) => {
+        if(err) {
+            res.sendStatus(403)
+        } else {
+            res.send({message: 'It\'s no more secret', authData})
+        }
+    });
+});
+
 app.post('/reg', (req,res) => {
     const u = new User();
     u.email = req.body.email;
@@ -90,3 +100,18 @@ app.post('/login', (req,res) => {
         res.json({ error: JSON.stringify(e)}).status(400)
     });
 });
+
+//Verify token
+function verifyToken(req,res,next) {
+    const bearerHeader = req.headers['authorization'];
+    console.log(bearerHeader)
+    if(typeof bearerHeader !== 'undefined') {
+        const bearer = bearerHeader.split(' ');
+        const bearerToken = bearer[1];
+        req.token = bearerToken;
+        console.log(req.token)
+        next()
+    } else {
+        res.sendStatus(403)
+    }
+}
