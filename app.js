@@ -39,7 +39,7 @@ connection
 app.get('/', (req, res) => res.json({connection: 'success'}).status(200));
 
 app.post('/secret', verifyToken,(req,res) => {
-    jwt.verify(req.token, SECRET, {expiresIn: '5m'}, (err,authData) => {
+    jwt.verify(req.token, SECRET, (err,authData) => {
         if(err) {
             res.sendStatus(403)
         } else {
@@ -78,8 +78,7 @@ app.post('/login', (req,res) => {
             bcrypt.compare(req.body.password, u.password)
             .then(data => {
                 if(data) {
-
-                    jwt.sign({u},SECRET, (err,token) => {
+                    jwt.sign({u},SECRET, {expiresIn: '1m'}, (err,token) => {
                         if(err) {
                             res.send({error: 'Error creating token'})
                         }
@@ -104,12 +103,10 @@ app.post('/login', (req,res) => {
 //Verify token
 function verifyToken(req,res,next) {
     const bearerHeader = req.headers['authorization'];
-    console.log(bearerHeader)
     if(typeof bearerHeader !== 'undefined') {
         const bearer = bearerHeader.split(' ');
         const bearerToken = bearer[1];
         req.token = bearerToken;
-        console.log(req.token)
         next()
     } else {
         res.sendStatus(403)
