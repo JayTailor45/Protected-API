@@ -48,6 +48,10 @@ app.post('/secret', verifyToken,(req,res) => {
     });
 });
 
+app.get('/checkToken',  verifyToken, (req, res) => {
+    res.json({auth: 'ok'})
+})
+
 app.post('/reg', (req,res) => {
     const u = new User();
     u.email = req.body.email;
@@ -58,7 +62,7 @@ app.post('/reg', (req,res) => {
             u.password = hashPassword
             u.save()
             .then(user => {
-                res.send(user).status(200)
+                res.send({status: 'User created'}).status(200)
             })
             .catch(e => {
                 res.json({ error: JSON.stringify(e)}).status(400)
@@ -109,6 +113,6 @@ function verifyToken(req,res,next) {
         req.token = bearerToken;
         next()
     } else {
-        res.sendStatus(403)
+        res.json({auth: 'none'})
     }
 }
